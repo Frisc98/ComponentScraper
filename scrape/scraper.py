@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 
-page_target = "Elmatis"
+page_target = "Tevetron"
 page_category = "IC"
 
 componentsDict = {
