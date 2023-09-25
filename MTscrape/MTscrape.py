@@ -1,4 +1,4 @@
-import multiprocessing, requests
+import multiprocessing, requests, csv
 from bs4 import BeautifulSoup
 from queue import Queue, Empty
 from concurrent.futures import ThreadPoolExecutor
@@ -17,6 +17,7 @@ class MTWebCrawler:
         self.scrapedPages = set([])
         self.crawlQueue = Queue()
         self.crawlQueue.put(self.URL_base)
+        self.dataQueue = Queue()
         print(f'Root URL initialized to {self.rootURL}')
 
     def scrapePage(self, url):
@@ -52,7 +53,7 @@ class MTWebCrawler:
             productPrice = item.find("span", class_ = "cprice1").text.strip()
             productPackage = item.find("h4").text.strip()
             productAvailability = item.find("span", class_="raspolozivost_2 da").text.strip() if item.find("span", class_="raspolozivost_2 da") != None else item.find("span", class_="raspolozivost_2 ne").text.strip()
-            
+            self.dataQueue.put([productNumber, productPrice, productPackage, productAvailability])
         print(f'PN: {productNumber} Price: {productPrice}')
         return
     
@@ -86,8 +87,18 @@ class MTWebCrawler:
     def info(self):
         print('\n Seed URL is: ', self.URL_base, '\n')
         print('Scraped pages are: ', self.scrapedPages, '\n')
+    
+    def writeToFile(self, path):
+        header = ['PN', 'Price', 'Desc', 'Availability']
+        f = open(path, 'w', encoding='UTF8', newline='')
+        writer = csv.writer(f)
+        writer.writerow(header)
+        while self.dataQueue.qsize():
+            writer.writerow(self.dataQueue.get())
+        f.close()
 
 if __name__ == '__main__':
     cc = MTWebCrawler(URL_base)
     cc.runWebCrawler()
+    cc.writeToFile('MTscrape/batchTevetronIC')
     cc.info()
